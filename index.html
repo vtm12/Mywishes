@@ -1,55 +1,108 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Исполнение желаний</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta charset="UTF-8">
+  <title>SEX WISHES</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+    .screen { display: none; }
+    .active { display: block; }
+    input, textarea, button { margin: 10px; padding: 5px; }
+    #reward { font-weight: bold; color: green; }
+    #rating { font-weight: bold; color: blue; }
+  </style>
 </head>
 <body>
-  <div class="app">
 
-    <!-- Экран 1: Регистрация -->
-    <div class="screen" id="screen-start">
-      <h1>Исполнение желаний</h1>
-      <input id="nickname" placeholder="Ваш ник" />
-      <button id="btn-start">Начать</button>
-    </div>
-
-    <!-- Экран 2: Ввод номера желания -->
-    <div class="screen hidden" id="screen-number">
-      <h2>Введите номер желания</h2>
-      <input id="wish-number" type="number" placeholder="№" />
-      <button id="btn-show-wish">Показать желание</button>
-    </div>
-
-    <!-- Экран 3: Выполнение -->
-    <div class="screen hidden" id="screen-wish">
-      <h2 id="wish-text"></h2>
-      <div class="btn-row">
-        <button class="btn-yes" id="btn-done">✅ Выполнено</button>
-        <button class="btn-no" id="btn-fail">❌ Не выполнено</button>
-      </div>
-    </div>
-
-    <!-- Экран 4: Награда -->
-    <div class="screen hidden" id="screen-reward">
-      <h2 id="reward-text"></h2>
-      <button id="btn-next">Дальше</button>
-    </div>
-
-    <!-- Экран 5: Конец игры -->
-    <div class="screen hidden" id="screen-end">
-      <h2>Игра окончена!</h2>
-      <p>Ваш рейтинг: <span id="final-rating"></span></p>
-      <button id="btn-restart">Начать заново</button>
-    </div>
-
-    <!-- Рейтинг -->
-    <div class="rating" id="rating">Рейтинг: 0</div>
-
+  <!-- Экран 1: Регистрация -->
+  <div id="screen1" class="screen active">
+    <h2>Введите ваш ник</h2>
+    <input type="text" id="nickname" placeholder="Ваш ник">
+    <button onclick="startGame()">Начать</button>
   </div>
-  <script src="script.js"></script>
+
+  <!-- Экран 2: Загрузка списков -->
+  <div id="screen2" class="screen">
+    <h2>Загрузка списков</h2>
+    <p>Список желаний (каждое с новой строки):</p>
+    <textarea id="wishes" rows="5" cols="30"></textarea>
+    <p>Список наград (каждая с новой строки):</p>
+    <textarea id="rewards" rows="5" cols="30"></textarea>
+    <br>
+    <button onclick="saveLists()">Сохранить списки</button>
+  </div>
+
+  <!-- Экран 3: Игра -->
+  <div id="screen3" class="screen">
+    <h2>Привет, <span id="playerName"></span>!</h2>
+    <p>Ваш рейтинг: <span id="rating">0</span></p>
+
+    <p>Введите номер желания:</p>
+    <input type="number" id="wishNumber" min="1">
+    <button onclick="showWish()">Показать желание</button>
+
+    <div id="currentWish" style="margin-top:20px;"></div>
+  </div>
+
+<script>
+  let player = { name: "", rating: 0 };
+  let wishes = [];
+  let rewards = [];
+
+  function startGame() {
+    const nick = document.getElementById("nickname").value.trim();
+    if (!nick) return alert("Введите ник!");
+    player.name = nick;
+    switchScreen(2);
+  }
+
+  function saveLists() {
+    wishes = document.getElementById("wishes").value.split("\n").filter(x => x.trim() !== "");
+    rewards = document.getElementById("rewards").value.split("\n").filter(x => x.trim() !== "");
+    if (wishes.length === 0 || rewards.length === 0) return alert("Заполните оба списка!");
+    document.getElementById("playerName").textContent = player.name;
+    switchScreen(3);
+  }
+
+  function showWish() {
+    const num = parseInt(document.getElementById("wishNumber").value) - 1;
+    if (isNaN(num) || num < 0 || num >= wishes.length) return alert("Неверный номер желания!");
+    const wish = wishes[num];
+
+    document.getElementById("currentWish").innerHTML = `
+      <h3>Желание №${num+1}: ${wish}</h3>
+      <button onclick="completeWish(${num})">Выполнено</button>
+      <button onclick="failWish(${num})">Не выполнено</button>
+    `;
+  }
+
+  function completeWish(num) {
+    wishes.splice(num, 1); // удалить желание
+    const reward = rewards.shift() || "Без награды";
+    player.rating += 2;
+    updateRating();
+    document.getElementById("currentWish").innerHTML = `
+      <p>Поздравляем! 🎉 Ваша награда: <span id="reward">${reward}</span></p>
+    `;
+  }
+
+  function failWish(num) {
+    wishes.splice(num, 1);
+    player.rating -= 1;
+    updateRating();
+    document.getElementById("currentWish").innerHTML = `<p>Жаль 😢 Игра закончена.</p>`;
+  }
+
+  function updateRating() {
+    document.getElementById("rating").textContent = player.rating;
+  }
+
+  function switchScreen(n) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById("screen" + n).classList.add("active");
+  }
+</script>
+
 </body>
 </html>
+
