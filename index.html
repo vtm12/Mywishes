@@ -4,116 +4,121 @@
   <meta charset="UTF-8">
   <title>SEX WISHES</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      margin: 20px; 
-      text-align: center; 
-      background-color: #000; 
-      color: #f00; 
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #fff;
+      color: #000;
+      text-align: center;
+      margin: 0;
+      padding: 40px;
     }
-    .screen { display: none; }
-    .active { display: block; }
-    input, button { 
-      margin: 10px; 
-      padding: 10px; 
-      font-size: 16px; 
-      background: #111; 
-      color: #f00; 
-      border: 1px solid #f00;
-      border-radius: 5px;
+
+    h1 {
+      font-weight: 600;
+      margin-bottom: 20px;
     }
-    input::placeholder { color: #777; }
-    button:hover { background: #f00; color: #000; cursor: pointer; }
-    #reward { font-weight: bold; color: #0f0; }
-    #rating { font-weight: bold; color: #ff0; }
+
+    .card {
+      border: 2px solid #c40000;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 500px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      background: #fff;
+    }
+
+    input, button {
+      padding: 12px 18px;
+      margin: 10px;
+      border: 2px solid #c40000;
+      border-radius: 8px;
+      font-size: 16px;
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: #c40000;
+      color: #fff;
+    }
+
+    #result {
+      font-size: 18px;
+      margin-top: 15px;
+    }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+  <h1>🎯 Игра желаний</h1>
+  <div class="card">
+    <div id="step1">
+      <p>Введите ваш ник:</p>
+      <input id="nickname" type="text" placeholder="Ваш ник">
+      <button onclick="nextStep()">Продолжить</button>
+    </div>
 
-  <!-- Экран 1: Регистрация -->
-  <div id="screen1" class="screen active">
-    <h2>Введите ваш ник</h2>
-    <input type="text" id="nickname" placeholder="Ваш ник">
-    <br>
-    <button onclick="startGame()">Начать</button>
+    <div id="step2" style="display:none;">
+      <p>Выберите номер желания (от 1 до N):</p>
+      <input id="wishNumber" type="number" min="1">
+      <button onclick="showWish()">Показать желание</button>
+    </div>
+
+    <div id="step3" style="display:none;">
+      <p id="wishText"></p>
+      <button onclick="done(true)">✅ Выполнено</button>
+      <button onclick="done(false)">❌ Не выполнено</button>
+    </div>
+
+    <div id="step4" style="display:none;">
+      <p id="rewardText"></p>
+    </div>
   </div>
 
-  <!-- Экран 2: Игра -->
-  <div id="screen2" class="screen">
-    <h2>Привет, <span id="playerName"></span>!</h2>
-    <p>Ваш рейтинг: <span id="rating">0</span></p>
+  <script>
+    let wishes = [];
+    let rewards = [];
 
-    <p>Выберите номер желания (от 1 до <span id="wishCount"></span>):</p>
-    <input type="number" id="wishNumber" min="1">
-    <button onclick="showWish()">Показать желание</button>
+    async function loadData() {
+      wishes = await fetch("wishes.json").then(r => r.json());
+      rewards = await fetch("rewards.json").then(r => r.json());
+    }
 
-    <div id="currentWish" style="margin-top:20px;"></div>
-  </div>
+    loadData();
 
-<script>
-  let player = { name: "", rating: 0 };
-  let wishes = [];
-  let rewards = [];
+    function nextStep() {
+      const nick = document.getElementById("nickname").value.trim();
+      if (!nick) return alert("Введите ник!");
+      document.getElementById("step1").style.display = "none";
+      document.getElementById("step2").style.display = "block";
+    }
 
-  // Загружаем списки с GitHub Pages
-  async function loadLists() {
-    const w = await fetch("wishes.json").then(r => r.json());
-    const r = await fetch("rewards.json").then(r => r.json());
-    wishes = w;
-    rewards = r;
-    document.getElementById("wishCount").textContent = wishes.length;
-  }
+    function showWish() {
+      const num = parseInt(document.getElementById("wishNumber").value);
+      if (isNaN(num) || num < 1 || num > wishes.length) {
+        return alert("Неверный номер!");
+      }
+      document.getElementById("wishText").innerText = "Ваше желание: " + wishes[num-1];
+      document.getElementById("step2").style.display = "none";
+      document.getElementById("step3").style.display = "block";
+    }
 
-  function startGame() {
-    const nick = document.getElementById("nickname").value.trim();
-    if (!nick) return alert("Введите ник!");
-    player.name = nick;
-    document.getElementById("playerName").textContent = player.name;
-    switchScreen(2);
-  }
-
-  function showWish() {
-    const num = parseInt(document.getElementById("wishNumber").value) - 1;
-    if (isNaN(num) || num < 0 || num >= wishes.length) return alert("Неверный номер!");
-    const wish = wishes[num];
-
-    document.getElementById("currentWish").innerHTML = `
-      <h3>Желание №${num+1}: ${wish}</h3>
-      <button onclick="completeWish(${num})">Выполнено</button>
-      <button onclick="failWish(${num})">Не выполнено</button>
-    `;
-  }
-
-  function completeWish(num) {
-    wishes.splice(num, 1); // удаляем желание
-    const reward = rewards[Math.floor(Math.random() * rewards.length)];
-    player.rating += 2;
-    updateRating();
-    document.getElementById("currentWish").innerHTML = `
-      <p>Поздравляем! 🎉 Ваша награда: <span id="reward">${reward}</span></p>
-    `;
-  }
-
-  function failWish(num) {
-    wishes.splice(num, 1);
-    player.rating -= 1;
-    updateRating();
-    document.getElementById("currentWish").innerHTML = `<p>Жаль 😢 Игра закончена.</p>`;
-  }
-
-  function updateRating() {
-    document.getElementById("rating").textContent = player.rating;
-  }
-
-  function switchScreen(n) {
-    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    document.getElementById("screen" + n).classList.add("active");
-  }
-
-  loadLists();
-</script>
-
+    function done(ok) {
+      document.getElementById("step3").style.display = "none";
+      document.getElementById("step4").style.display = "block";
+      if (ok) {
+        const reward = rewards[Math.floor(Math.random() * rewards.length)];
+        document.getElementById("rewardText").innerText = "🎁 Ваша награда: " + reward;
+      } else {
+        document.getElementById("rewardText").innerText = "😢 Игра окончена. Рейтинг снижен.";
+      }
+    }
+  </script>
 </body>
 </html>
+
 
 
