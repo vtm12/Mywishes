@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Исполнение желаний</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="app">
+
+    <!-- Экран 1: Регистрация -->
+    <div class="screen" id="screen-start">
+      <h1>Исполнение желаний</h1>
+      <input id="nickname" placeholder="Ваш ник" />
+      <button id="btn-start">Начать</button>
+    </div>
+
+    <!-- Экран 2: Ввод номера желания -->
+    <div class="screen hidden" id="screen-number">
+      <h2>Введите номер желания</h2>
+      <input id="wish-number" type="number" placeholder="№" />
+      <button id="btn-show-wish">Показать желание</button>
+    </div>
+
+    <!-- Экран 3: Выполнение -->
+    <div class="screen hidden" id="screen-wish">
+      <h2 id="wish-text"></h2>
+      <div class="btn-row">
+        <button class="btn-yes" id="btn-done">✅ Выполнено</button>
+        <button class="btn-no" id="btn-fail">❌ Не выполнено</button>
+      </div>
+    </div>
+
+    <!-- Экран 4: Награда -->
+    <div class="screen hidden" id="screen-reward">
+      <h2 id="reward-text"></h2>
+      <button id="btn-next">Дальше</button>
+    </div>
+
+    <!-- Экран 5: Конец игры -->
+    <div class="screen hidden" id="screen-end">
+      <h2>Игра окончена!</h2>
+      <p>Ваш рейтинг: <span id="final-rating"></span></p>
+      <button id="btn-restart">Начать заново</button>
+    </div>
+
+    <!-- Рейтинг -->
+    <div class="rating" id="rating">Рейтинг: 0</div>
+
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
