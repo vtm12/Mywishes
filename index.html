@@ -4,12 +4,28 @@
   <meta charset="UTF-8">
   <title>SEX WISHES</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      text-align: center; 
+      background-color: #000; 
+      color: #f00; 
+    }
     .screen { display: none; }
     .active { display: block; }
-    input, textarea, button { margin: 10px; padding: 5px; }
-    #reward { font-weight: bold; color: green; }
-    #rating { font-weight: bold; color: blue; }
+    input, button { 
+      margin: 10px; 
+      padding: 10px; 
+      font-size: 16px; 
+      background: #111; 
+      color: #f00; 
+      border: 1px solid #f00;
+      border-radius: 5px;
+    }
+    input::placeholder { color: #777; }
+    button:hover { background: #f00; color: #000; cursor: pointer; }
+    #reward { font-weight: bold; color: #0f0; }
+    #rating { font-weight: bold; color: #ff0; }
   </style>
 </head>
 <body>
@@ -18,26 +34,16 @@
   <div id="screen1" class="screen active">
     <h2>Введите ваш ник</h2>
     <input type="text" id="nickname" placeholder="Ваш ник">
+    <br>
     <button onclick="startGame()">Начать</button>
   </div>
 
-  <!-- Экран 2: Загрузка списков -->
+  <!-- Экран 2: Игра -->
   <div id="screen2" class="screen">
-    <h2>Загрузка списков</h2>
-    <p>Список желаний (каждое с новой строки):</p>
-    <textarea id="wishes" rows="5" cols="30"></textarea>
-    <p>Список наград (каждая с новой строки):</p>
-    <textarea id="rewards" rows="5" cols="30"></textarea>
-    <br>
-    <button onclick="saveLists()">Сохранить списки</button>
-  </div>
-
-  <!-- Экран 3: Игра -->
-  <div id="screen3" class="screen">
     <h2>Привет, <span id="playerName"></span>!</h2>
     <p>Ваш рейтинг: <span id="rating">0</span></p>
 
-    <p>Введите номер желания:</p>
+    <p>Выберите номер желания (от 1 до <span id="wishCount"></span>):</p>
     <input type="number" id="wishNumber" min="1">
     <button onclick="showWish()">Показать желание</button>
 
@@ -49,24 +55,26 @@
   let wishes = [];
   let rewards = [];
 
+  // Загружаем списки с GitHub Pages
+  async function loadLists() {
+    const w = await fetch("wishes.json").then(r => r.json());
+    const r = await fetch("rewards.json").then(r => r.json());
+    wishes = w;
+    rewards = r;
+    document.getElementById("wishCount").textContent = wishes.length;
+  }
+
   function startGame() {
     const nick = document.getElementById("nickname").value.trim();
     if (!nick) return alert("Введите ник!");
     player.name = nick;
-    switchScreen(2);
-  }
-
-  function saveLists() {
-    wishes = document.getElementById("wishes").value.split("\n").filter(x => x.trim() !== "");
-    rewards = document.getElementById("rewards").value.split("\n").filter(x => x.trim() !== "");
-    if (wishes.length === 0 || rewards.length === 0) return alert("Заполните оба списка!");
     document.getElementById("playerName").textContent = player.name;
-    switchScreen(3);
+    switchScreen(2);
   }
 
   function showWish() {
     const num = parseInt(document.getElementById("wishNumber").value) - 1;
-    if (isNaN(num) || num < 0 || num >= wishes.length) return alert("Неверный номер желания!");
+    if (isNaN(num) || num < 0 || num >= wishes.length) return alert("Неверный номер!");
     const wish = wishes[num];
 
     document.getElementById("currentWish").innerHTML = `
@@ -77,8 +85,8 @@
   }
 
   function completeWish(num) {
-    wishes.splice(num, 1); // удалить желание
-    const reward = rewards.shift() || "Без награды";
+    wishes.splice(num, 1); // удаляем желание
+    const reward = rewards[Math.floor(Math.random() * rewards.length)];
     player.rating += 2;
     updateRating();
     document.getElementById("currentWish").innerHTML = `
@@ -101,8 +109,11 @@
     document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
     document.getElementById("screen" + n).classList.add("active");
   }
+
+  loadLists();
 </script>
 
 </body>
 </html>
+
 
