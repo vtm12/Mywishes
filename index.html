@@ -14,14 +14,8 @@
       align-items: center;
       height: 100vh;
     }
-    .container {
-      text-align: center;
-      max-width: 600px;
-      padding: 20px;
-    }
-    h1, h2, h3 {
-      margin-bottom: 20px;
-    }
+    .container { text-align: center; max-width: 600px; padding: 20px; }
+    h1,h2,h3 { margin-bottom: 20px; }
     input, button {
       padding: 10px 15px;
       margin: 10px 0;
@@ -29,166 +23,149 @@
       border-radius: 5px;
       font-size: 16px;
     }
-    input {
-      width: 60%;
-    }
-    button {
-      background-color: #c00;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #900;
-    }
-    .hidden {
-      display: none;
-    }
-    .reward-box {
-      border: 2px solid #c00;
-      padding: 15px;
-      margin: 20px 0;
-      background-color: #222;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .stats {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #bbb;
-    }
+    input { width: 60%; }
+    button { background-color: #c00; color: white; cursor: pointer; }
+    button:hover { background-color: #900; }
+    .hidden { display: none; }
+    .reward-box { border: 2px solid #c00; padding: 15px; margin: 20px 0; background-color: #222; font-size: 18px; font-weight: bold; }
+    .stats { margin-top: 20px; font-size: 14px; color: #bbb; }
   </style>
 </head>
 <body>
-  <div class="container">
+<div class="container">
 
-    <!-- Экран 1: ник -->
-    <div id="screen-nick">
-      <h1>Раба желаний</h1>
-      <p>Введите свой ник:</p>
-      <input type="text" id="nickname" placeholder="Ваш ник">
-      <br>
-      <button onclick="startGame()">Начать</button>
-    </div>
-
-    <!-- Экран 2: выбор желания -->
-    <div id="screen-choice" class="hidden">
-      <h2 id="welcome"></h2>
-      <p id="choice-text"></p>
-      <input type="number" id="wishNumber" min="1">
-      <br>
-      <button onclick="chooseWish()">Выбрать</button>
-      <div class="stats" id="stats-panel"></div>
-    </div>
-
-    <!-- Экран 3: результат -->
-    <div id="screen-result" class="hidden">
-      <h3 id="wishText"></h3>
-      <button onclick="completeWish(true)">✅ Выполнено</button>
-      <button onclick="completeWish(false)">❌ Не выполнено</button>
-      <div id="reward-section" class="hidden">
-        <h3>Ваша награда от Него:</h3>
-        <div class="reward-box" id="rewardText"></div>
-        <button onclick="nextRound()">Продолжить</button>
-      </div>
-      <div id="fail-section" class="hidden">
-        <h3>Ты отказалась. -1 балл</h3>
-        <button onclick="nextRound()">Продолжить</button>
-      </div>
-      <div class="stats" id="stats-panel2"></div>
-    </div>
-
+  <!-- Экран 1: ник -->
+  <div id="screen-nick">
+    <h1>Игра желаний</h1>
+    <p>Введите свой ник:</p>
+    <input type="text" id="nickname" placeholder="Ваш ник">
+    <br>
+    <button onclick="startGame()">Начать</button>
   </div>
 
-  <script>
-    let wishes = [];
-    let rewards = [];
-    let currentPlayer = "";
-    let currentWish = "";
-    let stats = JSON.parse(localStorage.getItem("stats")) || {};
+  <!-- Экран 2: выбор его желания -->
+  <div id="screen-choice" class="hidden">
+    <h2 id="welcome"></h2>
+    <p id="choice-text"></p>
+    <input type="number" id="wishNumber" min="1">
+    <br>
+    <button onclick="chooseWish()">Выбрать</button>
+    <div class="stats" id="stats-panel"></div>
+  </div>
 
-    async function loadData() {
-      const w = await fetch("wishes.json").then(r => r.json());
-      const r = await fetch("rewards.json").then(r => r.json());
-      wishes = w;
-      rewards = r;
+  <!-- Экран 3: результат -->
+  <div id="screen-result" class="hidden">
+    <h3 id="wishText"></h3>
+    <button onclick="completeWish(true)">✅ Выполнено</button>
+    <button onclick="completeWish(false)">❌ Не выполнено</button>
+    <div id="reward-section" class="hidden">
+      <h3>Ваша награда:</h3>
+      <div class="reward-box" id="rewardText"></div>
+      <button onclick="nextRound()">Продолжить</button>
+    </div>
+    <div id="fail-section" class="hidden">
+      <h3>Ты отказалась. -1 балл</h3>
+      <button onclick="nextRound()">Продолжить</button>
+    </div>
+    <div class="stats" id="stats-panel2"></div>
+  </div>
+
+</div>
+
+<script>
+let wishes = [];
+let rewards = [];
+let currentPlayer = "";
+let currentWish = "";
+let stats = JSON.parse(localStorage.getItem("stats")) || {};
+
+// Загрузка JSON с анти-кешем
+async function loadData() {
+  wishes = await fetch("wishes.json?v=" + Date.now()).then(r => r.json());
+  rewards = await fetch("rewards.json?v=" + Date.now()).then(r => r.json());
+}
+
+async function startGame() {
+  // Ждём загрузки данных перед игрой
+  if (wishes.length === 0) {
+    await loadData();
+  }
+
+  currentPlayer = document.getElementById("nickname").value.trim();
+  if (!currentPlayer) {
+    alert("Введите ник!");
+    return;
+  }
+  if (!stats[currentPlayer]) {
+    stats[currentPlayer] = { score: 0, completed: 0, failed: 0 };
+  }
+
+  document.getElementById("screen-nick").classList.add("hidden");
+  document.getElementById("screen-choice").classList.remove("hidden");
+  document.getElementById("welcome").innerText = "Привет, " + currentPlayer + "!";
+  document.getElementById("choice-text").innerText = "Выбери число от 1 до " + wishes.length;
+
+  updateStats();
+}
+
+function chooseWish() {
+  const num = parseInt(document.getElementById("wishNumber").value);
+  if (isNaN(num) || num < 1 || num > wishes.length) {
+    alert("Введите корректное число!");
+    return;
+  }
+  currentWish = wishes[num - 1];
+  document.getElementById("wishText").innerText = "Желание: " + currentWish;
+
+  document.getElementById("screen-choice").classList.add("hidden");
+  document.getElementById("screen-result").classList.remove("hidden");
+  document.getElementById("reward-section").classList.add("hidden");
+  document.getElementById("fail-section").classList.add("hidden");
+  updateStats();
+}
+
+function completeWish(success) {
+  if (success) {
+    stats[currentPlayer].score += 2;
+    stats[currentPlayer].completed++;
+    if (rewards.length > 0) {
+      let randIndex = Math.floor(Math.random() * rewards.length);
+      let reward = rewards[randIndex];
+      rewards.splice(randIndex, 1);
+      document.getElementById("rewardText").innerText = reward;
+      document.getElementById("reward-section").classList.remove("hidden");
+    } else {
+      document.getElementById("rewardText").innerText = "Награды закончились!";
+      document.getElementById("reward-section").classList.remove("hidden");
     }
+  } else {
+    stats[currentPlayer].score -= 1;
+    stats[currentPlayer].failed++;
+    document.getElementById("fail-section").classList.remove("hidden");
+  }
+  saveStats();
+  updateStats();
+}
 
-    function startGame() {
-      currentPlayer = document.getElementById("nickname").value.trim();
-      if (!currentPlayer) {
-        alert("Введите ник!");
-        return;
-      }
-      if (!stats[currentPlayer]) {
-        stats[currentPlayer] = { score: 0, completed: 0, failed: 0 };
-      }
-      document.getElementById("screen-nick").classList.add("hidden");
-      document.getElementById("screen-choice").classList.remove("hidden");
-      document.getElementById("welcome").innerText = "Привет, " + currentPlayer + "!";
-      document.getElementById("choice-text").innerText = 
-        "Выбери число от 1 до " + wishes.length;
-      updateStats();
-    }
+function nextRound() {
+  document.getElementById("screen-result").classList.add("hidden");
+  document.getElementById("screen-choice").classList.remove("hidden");
+  document.getElementById("choice-text").innerText = "Выбери число от 1 до " + wishes.length;
+}
 
-    function chooseWish() {
-      const num = parseInt(document.getElementById("wishNumber").value);
-      if (isNaN(num) || num < 1 || num > wishes.length) {
-        alert("Введите корректное число!");
-        return;
-      }
-      currentWish = wishes[num - 1];
-      document.getElementById("wishText").innerText = "Желание: " + currentWish;
-      document.getElementById("screen-choice").classList.add("hidden");
-      document.getElementById("screen-result").classList.remove("hidden");
-      document.getElementById("reward-section").classList.add("hidden");
-      document.getElementById("fail-section").classList.add("hidden");
-      updateStats();
-    }
+function updateStats() {
+  const text = `👤 ${currentPlayer} | Очки: ${stats[currentPlayer].score} | Выполнено: ${stats[currentPlayer].completed} | Провалы: ${stats[currentPlayer].failed}`;
+  document.getElementById("stats-panel").innerText = text;
+  document.getElementById("stats-panel2").innerText = text;
+}
 
-    function completeWish(success) {
-      if (success) {
-        stats[currentPlayer].score += 2;
-        stats[currentPlayer].completed++;
-        if (rewards.length > 0) {
-          const randIndex = Math.floor(Math.random() * rewards.length);
-          const reward = rewards[randIndex];
-          rewards.splice(randIndex, 1); // убираем награду
-          document.getElementById("rewardText").innerText = reward;
-          document.getElementById("reward-section").classList.remove("hidden");
-        } else {
-          document.getElementById("rewardText").innerText = "Награды закончились!";
-          document.getElementById("reward-section").classList.remove("hidden");
-        }
-      } else {
-        stats[currentPlayer].score -= 1;
-        stats[currentPlayer].failed++;
-        document.getElementById("fail-section").classList.remove("hidden");
-      }
-      saveStats();
-      updateStats();
-    }
-
-    function nextRound() {
-      document.getElementById("screen-result").classList.add("hidden");
-      document.getElementById("screen-choice").classList.remove("hidden");
-      document.getElementById("choice-text").innerText = 
-        "Выбери число от 1 до " + wishes.length;
-    }
-
-    function updateStats() {
-      const text = `👤 ${currentPlayer} | Очки: ${stats[currentPlayer].score} | Выполнено: ${stats[currentPlayer].completed} | Провалы: ${stats[currentPlayer].failed}`;
-      document.getElementById("stats-panel").innerText = text;
-      document.getElementById("stats-panel2").innerText = text;
-    }
-
-    function saveStats() {
-      localStorage.setItem("stats", JSON.stringify(stats));
-    }
-
-    loadData();
-  </script>
+function saveStats() {
+  localStorage.setItem("stats", JSON.stringify(stats));
+}
+</script>
 </body>
 </html>
+
 
 
 
