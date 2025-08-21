@@ -76,19 +76,30 @@
 let wishes = [];
 let rewards = [];
 let currentPlayer = "";
-let currentWish = "";
+let currentWishIndex = -1;
 let stats = JSON.parse(localStorage.getItem("stats")) || {};
 
-// Загрузка JSON с анти-кешем
+// Загрузка JSON
 async function loadData() {
-  wishes = await fetch("wishes.json?v=" + Date.now()).then(r => r.json());
-  rewards = await fetch("rewards.json?v=" + Date.now()).then(r => r.json());
+  try {
+    wishes = await fetch("wishes.json?v=" + Date.now()).then(r => r.json());
+    rewards = await fetch("rewards.json?v=" + Date.now()).then(r => r.json());
+  } catch (e) {
+    alert("Ошибка загрузки wishes.json / rewards.json. Проверь файлы!");
+    console.error(e);
+    wishes = [];
+    rewards = [];
+  }
 }
 
 async function startGame() {
-  // Ждём загрузки данных перед игрой
   if (wishes.length === 0) {
     await loadData();
+  }
+
+  if (wishes.length === 0) {
+    alert("Файл wishes.json пуст или не найден!");
+    return;
   }
 
   currentPlayer = document.getElementById("nickname").value.trim();
@@ -97,25 +108,38 @@ async function startGame() {
     return;
   }
   if (!stats[currentPlayer]) {
-    stats[currentPlayer] = { score: 0, completed: 0, failed: 0 };
+    stats[currentPlayer] = { score: 0, completed: 0, failed: 0, doneWishes: [] };
   }
 
   document.getElementById("screen-nick").classList.add("hidden");
   document.getElementById("screen-choice").classList.remove("hidden");
   document.getElementById("welcome").innerText = "Привет, " + currentPlayer + "!";
-  document.getElementById("choice-text").innerText = "Выбери число от 1 до " + wishes.length;
-
+  updateChoiceText();
   updateStats();
 }
 
+function updateChoiceText() {
+  if (wishes.length > 0) {
+    document.getElementById("choice-text").innerText = "Выбери число от 1 до " + wishes.length;
+  } else {
+    document.getElementById("choice-text").innerText = "Желания закончились!";
+  }
+}
+
 function chooseWish() {
+  if (wishes.length === 0) {
+    alert("Желания закончились!");
+    return;
+  }
+
   const num = parseInt(document.getElementById("wishNumber").value);
   if (isNaN(num) || num < 1 || num > wishes.length) {
     alert("Введите корректное число!");
     return;
   }
-  currentWish = wishes[num - 1];
-  document.getElementById("wishText").innerText = "Желание: " + currentWish;
+
+  currentWishIndex = num - 1;
+  document.getElementById("wishText").innerText = "Желание: " + wishes[currentWishIndex];
 
   document.getElementById("screen-choice").classList.add("hidden");
   document.getElementById("screen-result").classList.remove("hidden");
@@ -125,13 +149,17 @@ function chooseWish() {
 }
 
 function completeWish(success) {
+  if (currentWishIndex === -1) return;
+
   if (success) {
+    let wish = wishes.splice(currentWishIndex, 1)[0]; // удаляем желание
+    stats[currentPlayer].doneWishes.push(wish);
     stats[currentPlayer].score += 2;
     stats[currentPlayer].completed++;
     if (rewards.length > 0) {
       let randIndex = Math.floor(Math.random() * rewards.length);
       let reward = rewards[randIndex];
-      rewards.splice(randIndex, 1);
+      rewards.splice(randIndex, 1); // удаляем награду
       document.getElementById("rewardText").innerText = reward;
       document.getElementById("reward-section").classList.remove("hidden");
     } else {
@@ -150,11 +178,12 @@ function completeWish(success) {
 function nextRound() {
   document.getElementById("screen-result").classList.add("hidden");
   document.getElementById("screen-choice").classList.remove("hidden");
-  document.getElementById("choice-text").innerText = "Выбери число от 1 до " + wishes.length;
+  updateChoiceText();
 }
 
 function updateStats() {
-  const text = `👤 ${currentPlayer} | Очки: ${stats[currentPlayer].score} | Выполнено: ${stats[currentPlayer].completed} | Провалы: ${stats[currentPlayer].failed}`;
+  const player = stats[currentPlayer];
+  const text = `👤 ${currentPlayer} | Очки: ${player.score} | Выполнено: ${player.completed} | Провалы: ${player.failed}`;
   document.getElementById("stats-panel").innerText = text;
   document.getElementById("stats-panel2").innerText = text;
 }
@@ -165,6 +194,7 @@ function saveStats() {
 </script>
 </body>
 </html>
+
 
 
 
