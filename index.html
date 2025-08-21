@@ -2,132 +2,137 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Игра: раба желаний</title>
+  <title>Раба желаний</title>
   <style>
     body {
-      font-family: 'Oswald', sans-serif;
-      background: #000;
-      color: #f0f0f0;
-      text-align: center;
       margin: 0;
-      padding: 40px;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: black;
+      color: red;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
     }
+
     h1 {
-      font-weight: 700;
+      font-size: 2rem;
       margin-bottom: 20px;
-      color: #c40000;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      text-shadow: 0 0 10px red, 0 0 20px darkred;
     }
-    .card {
-      border: 2px solid #c40000;
-      border-radius: 10px;
+
+    .container {
+      background: rgba(20, 20, 20, 0.9);
       padding: 20px;
-      margin: 20px auto;
-      max-width: 500px;
-      background: #1a1a1a;
-      box-shadow: 0 0 20px rgba(196,0,0,0.3);
+      border: 2px solid red;
+      border-radius: 10px;
+      width: 320px;
+      box-shadow: 0 0 20px red;
     }
+
     input, button {
-      padding: 12px 18px;
-      margin: 10px;
-      border: 2px solid #c40000;
-      border-radius: 6px;
-      font-size: 16px;
-      background: #111;
-      color: #f0f0f0;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      margin: 8px 0;
+      padding: 10px;
+      width: 100%;
+      border: 2px solid red;
+      border-radius: 5px;
+      background: black;
+      color: red;
+      font-size: 1rem;
     }
-    input {
-      background: #222;
+
+    input::placeholder {
+      color: #777;
     }
+
     button:hover {
-      background: #c40000;
-      color: #fff;
-      box-shadow: 0 0 10px #c40000;
+      background: darkred;
+      cursor: pointer;
     }
-    #wishText {
-      font-size: 20px;
-      color: #fff;
-      margin-top: 15px;
-    }
-    #rewardText {
-      font-size: 22px;
-      font-weight: bold;
-      color: #c40000;
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      min-height: 40px;
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>☠ Раба желаний ☠</h1>
-  <div class="card">
-    <div id="step1">
-      <p>Введите ваш ник:</p>
-      <input id="nickname" type="text" placeholder="Ваш ник">
-      <button onclick="nextStep()">Продолжить</button>
-    </div>
-    <div id="step2" style="display:none;">
-      <p id="chooseText"></p>
-      <input id="wishNumber" type="number" min="1">
-      <button onclick="showWish()">Показать его желание</button>
-    </div>
-    <div id="step3" style="display:none;">
-      <p id="wishText"></p>
-      <button onclick="done(true)">✅ Выполнено</button>
-      <button onclick="done(false)">❌ Не выполнено</button>
-    </div>
-    <div id="step4" style="display:none;">
-      <p id="rewardText"></p>
+  <h1>Раба Желаний</h1>
+  <div class="container">
+    <input type="text" id="nickname" placeholder="Введите ник">
+    <button onclick="startGame()">Начать игру</button>
+    <div id="game" style="display:none;">
+      <p id="question"></p>
+      <input type="number" id="choice" placeholder="Введите номер">
+      <button onclick="checkChoice()">Выбрать</button>
+      <div id="result"></div>
     </div>
   </div>
 
   <script>
     let wishes = [];
     let rewards = [];
+    let currentWish = null;
 
-    async function loadData() {
-      wishes = await fetch("wishes.json").then(r => r.json());
-      rewards = await fetch("rewards.json").then(r => r.json());
-      // обновляем текст с количеством желаний
-      document.getElementById("chooseText").innerText = 
-        `Выберите номер желания (от 1 до ${wishes.length}):`;
-      document.getElementById("wishNumber").setAttribute("max", wishes.length);
+    // Функция загрузки JSON с обходом кэша
+    function loadJSON(url) {
+      return fetch(url + "?v=" + Date.now())
+        .then(response => response.json());
     }
 
-    loadData();
+    // Загружаем списки
+    Promise.all([
+      loadJSON("wishes.json"),
+      loadJSON("rewards.json")
+    ]).then(([w, r]) => {
+      wishes = w;
+      rewards = r;
+    });
 
-    function nextStep() {
-      const nick = document.getElementById("nickname").value.trim();
-      if (!nick) return alert("Введите ник!");
-      document.getElementById("step1").style.display = "none";
-      document.getElementById("step2").style.display = "block";
-    }
-
-    function showWish() {
-      const num = parseInt(document.getElementById("wishNumber").value);
-      if (isNaN(num) || num < 1 || num > wishes.length) {
-        return alert("Неверный номер!");
+    function startGame() {
+      const nickname = document.getElementById("nickname").value.trim();
+      if (!nickname) {
+        alert("Введите ник!");
+        return;
       }
-      document.getElementById("wishText").innerText = "⚡ Его желание: " + wishes[num-1];
-      document.getElementById("step2").style.display = "none";
-      document.getElementById("step3").style.display = "block";
+      document.getElementById("game").style.display = "block";
+      document.getElementById("question").innerText = 
+        `Привет, ${nickname}! Выбери число от 1 до ${wishes.length}`;
     }
 
-    function done(ok) {
-      document.getElementById("step3").style.display = "none";
-      document.getElementById("step4").style.display = "block";
-      if (ok) {
+    function checkChoice() {
+      const num = parseInt(document.getElementById("choice").value);
+      const result = document.getElementById("result");
+
+      if (isNaN(num) || num < 1 || num > wishes.length) {
+        result.innerText = `Введите число от 1 до ${wishes.length}`;
+        return;
+      }
+
+      currentWish = wishes[num - 1];
+      result.innerHTML = `
+        Его желание: <b>${currentWish}</b><br>
+        <button onclick="finishWish(true)">Выполнено</button>
+        <button onclick="finishWish(false)">Не выполнено</button>
+      `;
+    }
+
+    function finishWish(done) {
+      const result = document.getElementById("result");
+      if (done) {
         const reward = rewards[Math.floor(Math.random() * rewards.length)];
-        document.getElementById("rewardText").innerText = "🎁 Ваша награда от Него: " + reward;
+        result.innerHTML = `🎉 Поздравляем! Твоя награда от Него: <b>${reward}</b>`;
       } else {
-        document.getElementById("rewardText").innerText = "☠ Игра окончена. Ты не справилась,сучка...";
+        result.innerHTML = `❌ Игра окончена. Ты не справилась, сучка.`;
       }
     }
   </script>
 </body>
 </html>
+
 
 
 
