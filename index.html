@@ -2,77 +2,82 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>SEX WISHES</title>
+  <title>Игра: раба желаний</title>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #fff;
-      color: #000;
+      font-family: 'Oswald', sans-serif;
+      background: #000;
+      color: #f0f0f0;
       text-align: center;
       margin: 0;
       padding: 40px;
     }
-
     h1 {
-      font-weight: 600;
+      font-weight: 700;
       margin-bottom: 20px;
+      color: #c40000;
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
-
     .card {
       border: 2px solid #c40000;
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 20px;
       margin: 20px auto;
       max-width: 500px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      background: #fff;
+      background: #1a1a1a;
+      box-shadow: 0 0 20px rgba(196,0,0,0.3);
     }
-
     input, button {
       padding: 12px 18px;
       margin: 10px;
       border: 2px solid #c40000;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 16px;
-      background: #fff;
-      color: #000;
+      background: #111;
+      color: #f0f0f0;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
     }
-
+    input {
+      background: #222;
+    }
     button:hover {
       background: #c40000;
       color: #fff;
+      box-shadow: 0 0 10px #c40000;
     }
-
-    #result {
-      font-size: 18px;
+    #wishText {
+      font-size: 20px;
+      color: #fff;
       margin-top: 15px;
     }
+    #rewardText {
+      font-size: 22px;
+      font-weight: bold;
+      color: #c40000;
+    }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>🎯 Игра желаний</h1>
+  <h1>☠ Раба желаний ☠</h1>
   <div class="card">
     <div id="step1">
       <p>Введите ваш ник:</p>
       <input id="nickname" type="text" placeholder="Ваш ник">
       <button onclick="nextStep()">Продолжить</button>
     </div>
-
     <div id="step2" style="display:none;">
-      <p>Выберите номер желания (от 1 до N):</p>
+      <p id="chooseText"></p>
       <input id="wishNumber" type="number" min="1">
-      <button onclick="showWish()">Показать желание</button>
+      <button onclick="showWish()">Показать его желание</button>
     </div>
-
     <div id="step3" style="display:none;">
       <p id="wishText"></p>
       <button onclick="done(true)">✅ Выполнено</button>
       <button onclick="done(false)">❌ Не выполнено</button>
     </div>
-
     <div id="step4" style="display:none;">
       <p id="rewardText"></p>
     </div>
@@ -85,6 +90,10 @@
     async function loadData() {
       wishes = await fetch("wishes.json").then(r => r.json());
       rewards = await fetch("rewards.json").then(r => r.json());
+      // обновляем текст с количеством желаний
+      document.getElementById("chooseText").innerText = 
+        `Выберите номер желания (от 1 до ${wishes.length}):`;
+      document.getElementById("wishNumber").setAttribute("max", wishes.length);
     }
 
     loadData();
@@ -101,7 +110,7 @@
       if (isNaN(num) || num < 1 || num > wishes.length) {
         return alert("Неверный номер!");
       }
-      document.getElementById("wishText").innerText = "Ваше желание: " + wishes[num-1];
+      document.getElementById("wishText").innerText = "⚡ Его желание: " + wishes[num-1];
       document.getElementById("step2").style.display = "none";
       document.getElementById("step3").style.display = "block";
     }
@@ -111,14 +120,15 @@
       document.getElementById("step4").style.display = "block";
       if (ok) {
         const reward = rewards[Math.floor(Math.random() * rewards.length)];
-        document.getElementById("rewardText").innerText = "🎁 Ваша награда: " + reward;
+        document.getElementById("rewardText").innerText = "🎁 Ваша награда от Него: " + reward;
       } else {
-        document.getElementById("rewardText").innerText = "😢 Игра окончена. Рейтинг снижен.";
+        document.getElementById("rewardText").innerText = "☠ Игра окончена. Ты не справилась,сучка...";
       }
     }
   </script>
 </body>
 </html>
+
 
 
 
